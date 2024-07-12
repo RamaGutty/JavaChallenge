@@ -2,12 +2,14 @@ package com.challenge.java.servicio;
 
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import com.challenge.java.modelo.Camino;
+import com.challenge.java.modelo.CaminoOptimo;
 import com.challenge.java.modelo.Estacion;
 
 @Service
@@ -17,10 +19,10 @@ public class ServicioViajes {
 
     public ResponseEntity<String> agregarEstacion(long id, String nombre) {
         if (existeEstacion(id)) {
-            return new ResponseEntity<>("La estacion con ID " + id + " ya existe.", HttpStatus.OK);
+            return new ResponseEntity<>("La estacion con ID " + id + " ya existe.", HttpStatus.BAD_REQUEST);
         }else {
             estaciones.put(id, new Estacion(id, nombre));
-            return new ResponseEntity<>("Estación " + nombre + "creada con éxito", HttpStatus.OK);
+            return new ResponseEntity<>("Estación " + nombre + " creada con éxito", HttpStatus.OK);
         }
     }
 
@@ -64,54 +66,60 @@ public class ServicioViajes {
         return new ArrayList<>(caminos);
     }
 
-    public List<Estacion> encontrarCaminoOptimo(long idInicio, long idFin) {
+    public ResponseEntity<CaminoOptimo> encontrarCaminoOptimo(long idInicio, long idFin) {
+        Estacion origen = estaciones.get(idInicio);
+        Estacion destino = estaciones.get(idFin);
+
         Map<Long, Double> distancias = new HashMap<>();
         Map<Long, Long> previo = new HashMap<>();
-        PriorityQueue<Long> nodos = new PriorityQueue<>(Comparator.comparingDouble(distancias::get));
+        PriorityQueue<Nodo> colaPrioridad = new PriorityQueue<>(Comparator.comparingDouble(nodo -> nodo.distancia));
 
-        estaciones.keySet().forEach(id -> {
+        for (Long id : estaciones.keySet()) {
             if (id == idInicio) {
                 distancias.put(id, 0.0);
+                colaPrioridad.add(new Nodo(id, 0.0));
             } else {
                 distancias.put(id, Double.MAX_VALUE);
+                colaPrioridad.add(new Nodo(id, Double.MAX_VALUE));
             }
-            nodos.add(id);
-        });
+        }
 
-        while (!nodos.isEmpty()) {
-            long menor = nodos.poll();
+        while (!colaPrioridad.isEmpty()) {
+            Nodo nodoActual = colaPrioridad.poll();
+            long idActual = nodoActual.id;
 
-            if (menor == idFin) {
+            if (idActual == idFin) {
                 List<Estacion> camino = new ArrayList<>();
-                while (previo.containsKey(menor)) {
-                    camino.add(estaciones.get(menor));
-                    menor = previo.get(menor);
+                for (Long at = idFin; at != null; at = previo.get(at)) {
+                    camino.add(estaciones.get(at));
                 }
-                camino.add(estaciones.get(idInicio));
                 Collections.reverse(camino);
-                return camino;
+                CaminoOptimo caminoOptimo = new CaminoOptimo(camino, obtenerCostoCamino(listaIdEstaciones(camino)));
+                return new ResponseEntity<>(caminoOptimo, HttpStatus.OK);
             }
 
-            if (distancias.get(menor) == Double.MAX_VALUE) {
-                break;
-            }
-
-            for (Camino vecino : caminos) {
-                if (vecino.getIdOrigen() == menor) {
-                    long alt = vecino.getIdDestino();
-                    double nuevaDist = distancias.get(menor) + vecino.getCosto();
-
-                    if (nuevaDist < distancias.get(alt)) {
-                        distancias.put(alt, nuevaDist);
-                        previo.put(alt, menor);
-                        nodos.add(alt);
+            for (Camino camino : caminos) {
+                if (camino.getIdOrigen() == idActual) {
+                    long vecino = camino.getIdDestino();
+                    double nuevaDistancia = distancias.get(idActual) + camino.getCosto();
+                    if (nuevaDistancia < distancias.get(vecino)) {
+                        distancias.put(vecino, nuevaDistancia);
+                        previo.put(vecino, idActual);
+                        colaPrioridad.add(new Nodo(vecino, nuevaDistancia));
                     }
                 }
             }
         }
 
-        return Collections.emptyList();
+        return new ResponseEntity<>(new CaminoOptimo(Collections.emptyList(), 0, "TODO MAL"), HttpStatus.OK);
     }
+
+    public List<Long> listaIdEstaciones(List<Estacion> estaciones) {
+        return estaciones.stream()
+                .map(Estacion::getId)
+                .collect(Collectors.toList());
+    }
+    
 
     public double obtenerCostoCamino(List<Long> idEstaciones) {
         double costo = 0;
@@ -128,5 +136,15 @@ public class ServicioViajes {
             }
         }
         return costo;
+    }
+
+    private static class Nodo {
+        long id;
+        double distancia;
+
+        Nodo(long id, double distancia) {
+            this.id = id;
+            this.distancia = distancia;
+        }
     }
 }

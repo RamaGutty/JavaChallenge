@@ -3,7 +3,6 @@ package com.challenge.java.controlador;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -13,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.challenge.java.modelo.Camino;
+import com.challenge.java.modelo.CaminoOptimo;
 import com.challenge.java.modelo.Estacion;
 import com.challenge.java.servicio.ServicioViajes;
 
@@ -34,7 +34,7 @@ public class ControladorViajes {
     }
 
     @GetMapping("/caminos/{id_origen}/{id_destino}")
-    public List<Estacion> obtenerCaminoOptimo(@PathVariable("id_origen") long idOrigen, @PathVariable("id_destino") long idDestino) {
+    public ResponseEntity<CaminoOptimo> obtenerCaminoOptimo(@PathVariable("id_origen") long idOrigen, @PathVariable("id_destino") long idDestino) {
         return servicioViajes.encontrarCaminoOptimo(idOrigen, idDestino);
     }
 
