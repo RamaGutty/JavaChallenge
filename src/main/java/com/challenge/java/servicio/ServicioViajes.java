@@ -3,6 +3,8 @@ package com.challenge.java.servicio;
 
 import java.util.*;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import com.challenge.java.modelo.Camino;
@@ -13,17 +15,45 @@ public class ServicioViajes {
     private final Map<Long, Estacion> estaciones = new HashMap<>();
     private final List<Camino> caminos = new ArrayList<>();
 
-    public void agregarEstacion(long id, String nombre) {
-        estaciones.putIfAbsent(id, new Estacion(id, nombre));
+    public ResponseEntity<String> agregarEstacion(long id, String nombre) {
+        if (existeEstacion(id)) {
+            return new ResponseEntity<>("La estacion con ID " + id + " ya existe.", HttpStatus.OK);
+        }else {
+            estaciones.put(id, new Estacion(id, nombre));
+            return new ResponseEntity<>("Estación " + nombre + "creada con éxito", HttpStatus.OK);
+        }
     }
 
-    public void agregarCamino(long id, long idOrigen, long idDestino, double costo) {
+    public boolean existeEstacion(long id){
+        return estaciones.containsKey(id);
+    }
+
+    public ResponseEntity<String> agregarCamino(long id, long idOrigen, long idDestino, double costo) {
         Estacion origen = estaciones.get(idOrigen);
         Estacion destino = estaciones.get(idDestino);
-        if (origen != null && destino != null) {
-            caminos.add(new Camino(id, idOrigen, idDestino, costo));
-            caminos.add(new Camino(id, idDestino, idOrigen, costo));
+        
+        if (origen == null) {
+            return new ResponseEntity<>("La estación de origen con ID " + idOrigen + " no existe.", HttpStatus.BAD_REQUEST);
         }
+        
+        if (destino == null) {
+            return new ResponseEntity<>("La estación de destino con ID " + idDestino + " no existe.", HttpStatus.BAD_REQUEST);
+        }
+        
+        if (existeCamino(idOrigen, idDestino)) {
+            return new ResponseEntity<>("El camino entre la estación de origen y destino ya existe.", HttpStatus.CONFLICT);
+        }
+        
+        caminos.add(new Camino(id, idOrigen, idDestino, costo));
+        caminos.add(new Camino(id, idDestino, idOrigen, costo));
+        return new ResponseEntity<>("Camino agregado exitosamente.", HttpStatus.OK);
+    }
+    
+
+    private boolean existeCamino(long idOrigen, long idDestino) {
+        return caminos.stream().anyMatch(camino -> 
+            (camino.getIdOrigen() == idOrigen && camino.getIdDestino() == idDestino) ||
+            (camino.getIdOrigen() == idDestino && camino.getIdDestino() == idOrigen));
     }
 
     public List<Estacion> obtenerEstaciones() {

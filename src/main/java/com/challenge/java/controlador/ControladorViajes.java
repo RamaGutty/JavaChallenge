@@ -3,6 +3,8 @@ package com.challenge.java.controlador;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -22,13 +24,13 @@ public class ControladorViajes {
     private ServicioViajes servicioViajes;
 
     @PutMapping("/estaciones/{id_estacion}")
-    public void agregarEstacion(@PathVariable("id_estacion") long idEstacion, @RequestParam String nombre) {
-        servicioViajes.agregarEstacion(idEstacion, nombre);
+    public ResponseEntity<String> agregarEstacion(@PathVariable("id_estacion") long idEstacion, @RequestParam String nombre) {
+        return servicioViajes.agregarEstacion(idEstacion, nombre);
     }
 
     @PutMapping("/caminos/{id_camino}")
-    public void agregarCamino(@PathVariable("id_camino") long idCamino, @RequestParam long idOrigen, @RequestParam long idDestino, @RequestParam double costo) {
-        servicioViajes.agregarCamino(idCamino, idOrigen, idDestino, costo);
+    public ResponseEntity<String> agregarCamino(@PathVariable("id_camino") long idCamino, @RequestParam long idOrigen, @RequestParam long idDestino, @RequestParam double costo) {
+        return servicioViajes.agregarCamino(idCamino, idOrigen, idDestino, costo);
     }
 
     @GetMapping("/caminos/{id_origen}/{id_destino}")
