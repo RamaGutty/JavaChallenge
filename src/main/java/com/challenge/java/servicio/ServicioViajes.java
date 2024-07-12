@@ -104,6 +104,9 @@ public class ServicioViajes {
                 }
                 Collections.reverse(camino);
                 CaminoOptimo caminoOptimo = new CaminoOptimo(camino, obtenerCostoCamino(listaIdEstaciones(camino)));
+                if (caminoOptimo.getEstaciones().size() == 1 && (idInicio != idFin)) {
+                    return new ResponseEntity<>(new CaminoOptimo(Collections.emptyList(), 0, "No existe camino para llegar a la estacion de destino"), HttpStatus.BAD_REQUEST);
+                }
                 return new ResponseEntity<>(caminoOptimo, HttpStatus.OK);
             }
 
