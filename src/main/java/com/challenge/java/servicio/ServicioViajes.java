@@ -29,6 +29,7 @@ public class ServicioViajes {
     public boolean existeEstacion(long id){
         return estaciones.containsKey(id);
     }
+    
 
     public ResponseEntity<String> agregarCamino(long id, long idOrigen, long idDestino, double costo) {
         Estacion origen = estaciones.get(idOrigen);
@@ -69,6 +70,14 @@ public class ServicioViajes {
     public ResponseEntity<CaminoOptimo> encontrarCaminoOptimo(long idInicio, long idFin) {
         Estacion origen = estaciones.get(idInicio);
         Estacion destino = estaciones.get(idFin);
+        
+        if (origen == null) {
+            return new ResponseEntity<>(new CaminoOptimo(Collections.emptyList(), 0, "La estación de origen con ID " + idInicio + " no existe."), HttpStatus.BAD_REQUEST);
+        }
+        
+        if (destino == null) {
+            return new ResponseEntity<>(new CaminoOptimo(Collections.emptyList(), 0, "La estación de destino con ID " + idFin + " no existe."), HttpStatus.BAD_REQUEST);
+        }
 
         Map<Long, Double> distancias = new HashMap<>();
         Map<Long, Long> previo = new HashMap<>();
@@ -111,7 +120,7 @@ public class ServicioViajes {
             }
         }
 
-        return new ResponseEntity<>(new CaminoOptimo(Collections.emptyList(), 0, "TODO MAL"), HttpStatus.OK);
+        return new ResponseEntity<>(new CaminoOptimo(Collections.emptyList(), 0, "No existe camino para llegar a la estacion de destino"), HttpStatus.BAD_REQUEST);
     }
 
     public List<Long> listaIdEstaciones(List<Estacion> estaciones) {
