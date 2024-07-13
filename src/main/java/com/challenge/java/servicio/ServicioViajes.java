@@ -49,7 +49,7 @@ public class ServicioViajes {
         
         caminos.add(new Camino(id, idOrigen, idDestino, costo));
         caminos.add(new Camino(id, idDestino, idOrigen, costo));
-        return new ResponseEntity<>("Camino agregado exitosamente.", HttpStatus.OK);
+        return new ResponseEntity<>("Camino agregado correctamente.", HttpStatus.OK);
     }
     
 
@@ -148,6 +148,12 @@ public class ServicioViajes {
             }
         }
         return costo;
+    }
+
+    /* Metodo para test */
+    public void limpiarDatos() {
+        estaciones.clear();
+        caminos.clear();
     }
 
     private static class Nodo {
